@@ -14,7 +14,7 @@ suspend fun AliceswChapterContent(
     context: Context,
     chapterId: String,
     bookId: String,
-    localBookDataSourceApi: LocalBookDataSourceApi
+    localBookDataSourceApi: LocalBookDataSourceApi,
 ): ChapterContent {
 
     val volumeId = localBookDataSourceApi.getBookVolumes(bookId)?.volumes?.find {
@@ -24,13 +24,12 @@ suspend fun AliceswChapterContent(
     val title = soup?.selectFirst(".j_chapterName")?.text() ?: "未知"
     val content = soup?.selectFirst(".read-content")?.children()
 
-    val lastChapter = Regex("/book/[^/]+/([^/]+)\\.html").find(
-        soup?.selectFirst("#j_chapterPrev")?.attr("href") ?: ""
-    )?.groupValues?.get(1) ?: ""
-
-    val nextChapter = Regex("/book/[^/]+/([^/]+)\\.html").find(
-        soup?.selectFirst("#j_chapterNext")?.attr("href") ?: ""
-    )?.groupValues?.get(1) ?: ""
+    val volumes = localBookDataSourceApi.getBookVolumes(bookId)!!.volumes
+    val flatChapter = volumes.flatMap { volume -> volume.chapters }
+    val flatChapterIds = flatChapter.map { it.id }
+    val currentIndex = flatChapterIds.indexOf(chapterId)
+    val prevId = flatChapterIds.getOrNull(currentIndex - 1)
+    val nextId = flatChapterIds.getOrNull(currentIndex + 1)
 
     return MutableChapterContent(
         id = chapterId, title = title, content = ContentBuilder().apply {
@@ -52,6 +51,6 @@ suspend fun AliceswChapterContent(
                 simpleText(buffer.joinToString("\n"))
                 buffer.clear()
             }
-        }.build(), lastChapter = lastChapter, nextChapter = nextChapter
+        }.build(), lastChapter = prevId ?: "", nextChapter = nextId ?: ""
     )
 }

@@ -22,8 +22,15 @@ private const val MAX_RETRY_TIMES = 3
 private const val INITIAL_RETRY_DELAY_MS = 2500L
 private const val BROWSER_TIMEOUT_MS = 5000L
 private const val MAX_CONCURRENT_REQUESTS = 3
+private const val WEBVIEW_IDLE_TIMEOUT_MS = 5000L
 
 private val requestLimiter = Semaphore(MAX_CONCURRENT_REQUESTS)
+
+private data class PooledWebView(
+    val webView: WebView, var idleSince: Long = 0L, var inUse: Boolean = false
+)
+
+private val webViewPool = mutableListOf<PooledWebView>()
 
 /**
  * User-Agent 生成器缓存实例，避免重复创建
@@ -78,6 +85,56 @@ suspend fun browserGet(context: Context, url: String, useWindowsUA: Boolean = fa
         }
     }
 
+private fun acquireWebView(context: Context): WebView {
+    val pooled = webViewPool.find { !it.inUse }
+    if (pooled != null) {
+        pooled.inUse = true
+        pooled.idleSince = 0L
+        pooled.webView.apply {
+            stopLoading()
+        }
+        cleanupExpiredWebViews()
+        infoLog("WebView pool: 复用实例", "poolSize=", webViewPool.size)
+        return pooled.webView
+    }
+    val webView = WebView(context.applicationContext).apply {
+        settings.apply {
+            javaScriptEnabled = true
+            domStorageEnabled = true
+        }
+        webViewClient = BrowserWebViewClient()
+    }
+    webViewPool.add(PooledWebView(webView, inUse = true))
+    infoLog("WebView pool: 新建实例", "poolSize=", webViewPool.size)
+    return webView
+}
+
+private fun releaseWebView(webView: WebView) {
+    webView.apply {
+        stopLoading()
+        removeJavascriptInterface("Bridge")
+        //webViewClient = object : WebViewClient() {}
+    }
+    webViewPool.find { it.webView == webView }?.let {
+        it.inUse = false
+        it.idleSince = System.currentTimeMillis()
+        infoLog("WebView pool: 归还实例", "poolSize=", webViewPool.size)
+    }
+}
+
+private fun cleanupExpiredWebViews() {
+    val now = System.currentTimeMillis()
+    val iterator = webViewPool.iterator()
+    while (iterator.hasNext()) {
+        val pooled = iterator.next()
+        if (!pooled.inUse && pooled.idleSince > 0 && (now - pooled.idleSince) > WEBVIEW_IDLE_TIMEOUT_MS) {
+            infoLog("WebView pool: 销毁过期实例", "idle=", now - pooled.idleSince, "ms")
+            pooled.webView.destroy()
+            iterator.remove()
+        }
+    }
+}
+
 /**
  * 执行单次浏览器请求
  */
@@ -85,31 +142,22 @@ private suspend fun executeBrowserGet(
     context: Context, url: String, useWindowsUA: Boolean
 ): String? = withContext(Dispatchers.Main) {
     withTimeoutOrNull(BROWSER_TIMEOUT_MS) {
-        suspendCancellableCoroutine { continuation ->
-            val webView = WebView(context).apply {
-                settings.apply {
-                    javaScriptEnabled = true
-                    domStorageEnabled = true
-                    userAgentString = userAgentGenerator.generate(
-                        if (useWindowsUA) UserAgentGenerator.Platform.Windows
-                        else UserAgentGenerator.Platform.Android
-                    )
-                }
-
-                addJavascriptInterface(JavaScriptBridge {
-                    continuation.resume(it)
-                    destroy()
-                }, "Bridge")
-
-                webViewClient = BrowserWebViewClient()
-
-                loadUrl(url)
-            }
-
-            continuation.invokeOnCancellation {
-                webView.destroy()
-            }
+        val webView = acquireWebView(context).apply {
+            settings.userAgentString = userAgentGenerator.generate(
+                if (useWindowsUA) UserAgentGenerator.Platform.Windows
+                else UserAgentGenerator.Platform.Android
+            )
         }
+        suspendCancellableCoroutine { continuation ->
+            webView.addJavascriptInterface(JavaScriptBridge {
+                continuation.resume(it)
+            }, "Bridge")
+
+            webView.loadUrl(url)
+
+            continuation.invokeOnCancellation { releaseWebView(webView) }
+
+        }.also { releaseWebView(webView) }
     }
 }
 
@@ -158,8 +206,6 @@ private suspend fun <T> executeWithRetry(
                 return result
             }
         } catch (e: Exception) {
-            // 记录日志（可选）
-            // Log.w("HttpUtils", "Request failed (attempt ${retryCount + 1}/$maxRetries)", e)
         }
 
         retryCount++
