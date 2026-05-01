@@ -52,7 +52,7 @@ suspend fun FqbookChapterContent(
                     "p" -> buffer.add("\u3000\u3000" + it.text().trim())
                     "img" -> {
                         if (buffer.isNotEmpty()) {
-                            simpleText(buffer.joinToString("\n"))
+                            simpleText(buffer.joinToString("\n\n"))
                             buffer.clear()
                         }
                         image(it.attr("src").toUri())
@@ -61,7 +61,7 @@ suspend fun FqbookChapterContent(
 
             }
             if (buffer.isNotEmpty()) {
-                simpleText(buffer.joinToString("\n"))
+                simpleText(buffer.joinToString("\n\n"))
                 buffer.clear()
             }
         }.build(), lastChapter = prevId ?: "", nextChapter = nextId ?: ""

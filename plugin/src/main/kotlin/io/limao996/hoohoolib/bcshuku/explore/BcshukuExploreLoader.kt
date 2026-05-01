@@ -32,7 +32,7 @@ suspend fun loadSimpleBookList(
             val lastUpdated = item.selectFirst(".caption")?.child(4)?.text()?.let {
                 val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
                 LocalDateTime.parse("$it 00:00", formatter)
-            } ?: LocalDateTime.MIN
+            } ?: LocalDateTime.now()
 
             val isComplete = item.selectFirst(".caption .hoan-thanh-mau")?.text() != "连载"
 

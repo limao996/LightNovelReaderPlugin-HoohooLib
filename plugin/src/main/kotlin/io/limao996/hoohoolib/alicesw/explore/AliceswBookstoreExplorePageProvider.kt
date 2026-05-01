@@ -16,10 +16,10 @@ data class ExploreCategory(
     }
 
     enum class Order(val tag: String, val suffix: String) {
-        UpdateTime("更新时间", "/order/update_time+desc.html"), Word(
-            "总字数", "/order/word+desc.html"
+        UpdateTime("更新时间", "/parameters/update_time+desc.html"), Word(
+            "总字数", "/parameters/word+desc.html"
         ),
-        Hits("人气值", "/order/hits+desc.html"),
+        Hits("人气值", "/parameters/hits+desc.html"),
     }
 }
 
@@ -36,25 +36,25 @@ object AliceswExplorePageProvider : ExplorePageProvider.DefaultExplorePageProvid
         ),
         ExploreCategory( // 索引 2
             name = "🔥 今日排行",
-            path = "/other/rank_hits/order/hits_day.html",
+            path = "/other/rank_hits/parameters/hits_day.html",
             supportOrder = false,
             supportMultiPage = false
         ),
         ExploreCategory( // 索引 3
             name = "📅 本周排行",
-            path = "/other/rank_hits/order/hits_week.html",
+            path = "/other/rank_hits/parameters/hits_week.html",
             supportOrder = false,
             supportMultiPage = false
         ),
         ExploreCategory( // 索引 4
             name = "🌙 本月排行",
-            path = "/other/rank_hits/order/hits_month.html",
+            path = "/other/rank_hits/parameters/hits_month.html",
             supportOrder = false,
             supportMultiPage = false
         ),
         ExploreCategory( // 索引 5
             name = "🏆 年度总榜",
-            path = "/other/rank_hits/order/hits.html",
+            path = "/other/rank_hits/parameters/hits.html",
             supportOrder = false,
             supportMultiPage = false
         ),

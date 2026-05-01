@@ -15,16 +15,19 @@ suspend fun AliceswBookInformation(
     val detailBox = soup?.selectFirst(".detail-box")
 
     val title =
-        detailBox?.selectFirst(".top .xs-title")?.text()?.removeSuffix("全文阅读") ?: "暂无标题"
-    val description = soup?.selectFirst(".jianjie")?.text() ?: "暂无简介"
+        detailBox?.selectFirst(".top .xs-title")?.text()?.removeSuffix("全文阅读") ?: ""
+    val description = soup?.selectFirst(".jianjie")?.wholeText()?.trim()?.split("\n")
+        ?.joinToString("\n") {
+            "ㅤㅤ${it.trim()}"
+        } ?: ""
     val coverDoc = detailBox?.selectFirst(".imgbox img")
     val coverUrl = (coverDoc?.attr("src") ?: "https://img.321cdn.com/img/01.png").toUri()
-    val author = detailBox?.selectFirst(".fix")?.child(1)?.selectFirst("a")?.text() ?: "未知"
+    val author = detailBox?.selectFirst(".fix")?.child(1)?.selectFirst("a")?.text() ?: ""
     val classified =
         detailBox?.selectFirst(".fix")?.child(2)?.selectFirst("a")?.text()?.let { listOf(it) }
             ?: emptyList()
     val tags = (soup?.select(".tags .tg span a")?.map {
-        it.ownText()
+        "#" + it.ownText()
     } ?: emptyList())
     val subTitle = detailBox?.selectFirst(".fix")?.child(3)?.text() ?: ""
     val state = detailBox?.selectFirst(".fix")?.child(5)?.text() ?: ""
@@ -42,7 +45,7 @@ suspend fun AliceswBookInformation(
         tags = classified + tags,
         publishingHouse = "爱丽丝书屋🎓",
         wordCount = WordCount(wordCount),
-        lastUpdated = LocalDateTime.MIN,
+        lastUpdated = LocalDateTime.now(),
         isComplete = state.contains("已完结")
     )
 }

@@ -27,12 +27,15 @@ suspend fun FqbookBookInformation(
     val wordCount =
         info[1].text().trim().removePrefix("字数：").removeSuffix(" 字").toIntOrNull() ?: 0
 
-    val description = soup.selectFirst(".book-intro .bd")?.text() ?: ""
+    val description = soup.selectFirst(".book-intro .bd")?.wholeText()?.trim()?.split("\n")
+        ?.joinToString("\n") {
+            "ㅤㅤ${it.trim()}"
+        } ?: ""
 
     val lastUpdated = soup.selectFirst("div.mod.block.update span.time")?.text()?.let {
         val formatter = DateTimeFormatter.ofPattern("yyyy/M/d H:m")
         LocalDateTime.parse(it, formatter)
-    } ?: LocalDateTime.MIN
+    } ?: LocalDateTime.now()
 
     val isComplete = soup.selectFirst(".detail .column-2 .right span.status")?.text() == "已完结"
 

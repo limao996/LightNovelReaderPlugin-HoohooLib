@@ -53,7 +53,7 @@ suspend fun BcshukuChapterContent(
     val contentJson = withContext(Dispatchers.IO) {
         okHttpClient.newCall(postRequest).execute().body.string()
     }
-    infoLog(contentJson)
+
     val result = JSONObject(contentJson)
     val content = result.optString("content", "")
 
@@ -68,7 +68,10 @@ suspend fun BcshukuChapterContent(
 
     return MutableChapterContent(
         id = chapterId, title = title, content = ContentBuilder().apply {
-            simpleText(content)
+            simpleText(
+                content.replace("                ", "ㅤㅤ")
+                    .replace(Regex("ㅤㅤ\nㅤㅤ\n"), "\n")
+            )
         }.build(), lastChapter = prevId ?: "", nextChapter = nextId ?: ""
     )
 }

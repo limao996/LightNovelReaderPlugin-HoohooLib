@@ -21,7 +21,7 @@ suspend fun AliceswChapterContent(
         it.chapters.find { chapter -> chapter.id == chapterId } != null
     }?.volumeId ?: return ChapterContent.empty(chapterId)
     val soup = browserGet(context, "${ALICESW_HOST}/book/$volumeId/$chapterId.html", true)
-    val title = soup?.selectFirst(".j_chapterName")?.text() ?: "未知"
+    val title = soup?.selectFirst(".j_chapterName")?.text() ?: ""
     val content = soup?.selectFirst(".read-content")?.children()
 
     val volumes = localBookDataSourceApi.getBookVolumes(bookId)!!.volumes
@@ -39,16 +39,15 @@ suspend fun AliceswChapterContent(
                     "p" -> buffer.add("\u3000\u3000" + it.text().trim())
                     "img" -> {
                         if (buffer.isNotEmpty()) {
-                            simpleText(buffer.joinToString("\n"))
+                            simpleText(buffer.joinToString("\n\n"))
                             buffer.clear()
                         }
                         image(it.attr("src").toUri())
                     }
                 }
-
             }
             if (buffer.isNotEmpty()) {
-                simpleText(buffer.joinToString("\n"))
+                simpleText(buffer.joinToString("\n\n"))
                 buffer.clear()
             }
         }.build(), lastChapter = prevId ?: "", nextChapter = nextId ?: ""

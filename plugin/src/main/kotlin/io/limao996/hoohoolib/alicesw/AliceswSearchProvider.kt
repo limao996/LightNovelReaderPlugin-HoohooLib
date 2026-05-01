@@ -34,7 +34,8 @@ object AliceswSearchProvider : SearchProvider {
         val q = URLEncoder.encode(keyword, "utf-8")
         var currentPage = 0
         while (currentCoroutineContext().isActive) {
-            val soup = httpGet("${ALICESW_HOST}/search.html?q=$q&p=${++currentPage}&f=${searchType.type}")
+            val soup =
+                httpGet("${ALICESW_HOST}/search.html?q=$q&p=${++currentPage}&f=${searchType.type}")
             if (soup == null) {
                 emit(SearchResult.Error("网页请求失败！"))
                 return@flow
@@ -50,15 +51,15 @@ object AliceswSearchProvider : SearchProvider {
                 val titleLink = item.selectFirst("h5 a")
                 val title =
                     titleLink?.text()?.replace(Regex("^\\d+\\.\\s*"), "")?.removeSuffix("全文阅读")
-                        ?: "暂无标题"
+                        ?: continue
                 val id = titleLink?.attr("href")?.removePrefix("/novel/")?.removeSuffix(".html")
                     ?: continue
 
                 val statusElem = item.selectFirst("h5 small")
                 val status = statusElem?.text()?.trim('[', ']') == "已完结"
 
-                val author = item.selectFirst(".mb-1 a")?.text() ?: "未知"
-                val description = item.selectFirst(".content-txt")?.text() ?: "暂无简介"
+                val author = item.selectFirst(".mb-1 a")?.text() ?: ""
+                val description = item.selectFirst(".content-txt")?.wholeText()?.trim() ?: ""
 
                 val tagLinks = item.child(3).select("a")
                 val tags = tagLinks.map { tag ->
@@ -75,8 +76,7 @@ object AliceswSearchProvider : SearchProvider {
                 val updateTime =
                     Regex("更新时间：(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2})").find(timeText)?.groupValues?.get(
                         1
-                    )?.let { LocalDateTime.parse(it, formatter) } ?: LocalDateTime.MIN
-
+                    )?.let { LocalDateTime.parse(it, formatter) } ?: LocalDateTime.now()
                 emit(
                     SearchResult.MultipleBook(
                         MutableBookInformation(

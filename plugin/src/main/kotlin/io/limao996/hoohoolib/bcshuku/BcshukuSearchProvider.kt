@@ -38,7 +38,6 @@ object BcshukuSearchProvider : SearchProvider {
         val q = URLEncoder.encode(keyword, "utf-8")
         val ua = UserAgentGenerator().generateAndroidUA()
 
-        // Step 1: Get searchid from initial search request
         val initResponse = withContext(Dispatchers.IO) {
             val client = OkHttpClient.Builder().build()
             val request = Request.Builder()
@@ -97,7 +96,7 @@ object BcshukuSearchProvider : SearchProvider {
                 val lastUpdated = item.selectFirst(".caption .chuyen-muc")?.text()?.let {
                     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
                     LocalDateTime.parse("$it 00:00", formatter)
-                } ?: LocalDateTime.MIN
+                } ?: LocalDateTime.now()
 
                 val isComplete = item.selectFirst(".caption .hoan-thanh-mau")?.text() != "连载"
 

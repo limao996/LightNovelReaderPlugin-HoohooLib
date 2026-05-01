@@ -15,11 +15,10 @@ suspend fun FqbookBookVolumes(id: String): BookVolumes {
 
     return BookVolumes(
         id, volumeLists.mapIndexed { index, elements ->
-
             Volume(
                 volumeId = index.toString(),
                 volumeTitle = volumeTitles[index].text(),
-                chapters = elements.children().map {
+                chapters = elements.select("li").map {
                     val info = it.selectFirst("a")
                     ChapterInformation(
                         id = info?.attr("href")?.removePrefix("read-")?.removeSuffix(".html") ?: "",

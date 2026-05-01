@@ -1,10 +1,8 @@
 package io.limao996.hoohoolib.fqbook.explore
 
-import android.net.Uri
 import androidx.core.net.toUri
 import io.limao996.hoohoolib.fqbook.FQBOOK_HOST
 import io.limao996.hoohoolib.utils.httpGet
-import io.limao996.hoohoolib.utils.infoLog
 import io.nightfish.lightnovelreader.api.book.BookInformation
 import io.nightfish.lightnovelreader.api.book.MutableBookInformation
 import io.nightfish.lightnovelreader.api.book.WordCount
@@ -24,8 +22,7 @@ private fun buildCategoryUrl(
 }
 
 object FqbookExploreLoader {
-
-    data class Order(
+    data class Parameters(
         val catId: String = "-1",
         val size: String = "-1",
         val isFinish: String = "-1",
@@ -95,9 +92,9 @@ object FqbookExploreLoader {
     }
 
     suspend fun get(
-        pageNum: Int = 1, pageSize: Int = 30, order: Order = Order()
+        pageNum: Int = 1, pageSize: Int = 30, parameters: Parameters = Parameters()
     ): List<BookInformation> {
-        val url = order.run {
+        val url = parameters.run {
             buildCategoryUrl(
                 pageNum, pageSize, catId, size, isFinish, updT, orderBy
             )
@@ -119,7 +116,7 @@ object FqbookExploreLoader {
             val lastUpdated = item.selectFirst("p.update span.time")?.text()?.let {
                 val formatter = DateTimeFormatter.ofPattern("(yyyy-MM-dd HH:mm:ss)")
                 LocalDateTime.parse(it, formatter)
-            } ?: LocalDateTime.MIN
+            } ?: LocalDateTime.now()
 
             MutableBookInformation(
                 id = id,

@@ -12,7 +12,7 @@ suspend fun AliceswBookVolumes(id: String): BookVolumes {
     val chapters = items?.map {
         val doc = it.child(0)
         val id = Regex("/book/[^/]+/([^/]+)\\.html").find(
-            doc.attr("href") ?: ""
+            doc.attr("href")
         )?.groupValues?.get(1) ?: ""
         ChapterInformation(
             id = id,

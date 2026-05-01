@@ -1,8 +1,17 @@
 [versions]
 desugar = "2.1.5"
 agp = "9.1.0"
+http4kCore = "6.45.1.0"
 kotlin = "2.3.10"
 kotlinxCoroutinesCore = "1.10.2"
+ktorServerCio = "3.4.3"
+ktorServerContentNegotiation = "3.4.3"
+ktorServerCallLogging = "3.4.3"
+ktorServerCore = "3.4.3"
+ktorServerNetty = "3.4.3"
+ktorServerRouting = "3.4.3"
+ktorServerStatusPages = "3.4.3"
+nanohttpd = "2.3.1"
 runtime = "1.10.3"
 navigationRuntimeKtx = "2.9.7"
 jetbrainsKotlinJvm = "2.3.10"
@@ -17,6 +26,20 @@ lightnovelreader = "0.2-SNAPSHOT"
 
 [libraries]
 cxhttp = { module = "com.zhzc0x.cxhttp:cxhttp", version.ref = "cxhttp" }
+http4k-bom = { module = "org.http4k:http4k-bom", version.ref = "http4kCore" }
+http4k-core = { module = "org.http4k:http4k-core", version.ref = "http4kCore" }
+http4k-http4k-core = { module = "org.http4k:http4k-core" }
+http4k-realtime-core = { module = "org.http4k:http4k-realtime-core" }
+http4k-http4k-server-jetty = { module = "org.http4k:http4k-server-jetty" }
+http4k-server-jetty = { module = "org.http4k:http4k-server-jetty", version.ref = "http4kCore" }
+ktor-server-call-logging = { module = "io.ktor:ktor-server-call-logging", version.ref = "ktorServerCallLogging" }
+ktor-server-cio = { module = "io.ktor:ktor-server-cio", version.ref = "ktorServerCio" }
+ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktorServerContentNegotiation" }
+ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktorServerCore" }
+ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktorServerNetty" }
+ktor-server-routing = { module = "io.ktor:ktor-server-routing", version.ref = "ktorServerRouting" }
+ktor-server-status-pages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktorServerStatusPages" }
+nanohttpd = { module = "org.nanohttpd:nanohttpd", version.ref = "nanohttpd" }
 okhttp3-logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "okhttp" }
 okhttp3-okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar" }

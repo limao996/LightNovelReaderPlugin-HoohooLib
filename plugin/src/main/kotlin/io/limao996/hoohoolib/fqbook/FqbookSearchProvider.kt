@@ -3,6 +3,7 @@ package io.limao996.hoohoolib.fqbook
 import android.net.Uri
 import androidx.core.net.toUri
 import io.limao996.hoohoolib.utils.httpGet
+import io.limao996.hoohoolib.utils.infoLog
 import io.nightfish.lightnovelreader.api.book.MutableBookInformation
 import io.nightfish.lightnovelreader.api.book.WordCount
 import io.nightfish.lightnovelreader.api.util.local
@@ -56,12 +57,12 @@ object FqbookSearchProvider : SearchProvider {
                     link.child(0).attr("src").let { FQBOOK_HOST + it.removePrefix("..") }.toUri()
                 val title = item.selectFirst(".right h5 .name")?.text() ?: continue
                 val author = item.selectFirst(".right .author")?.text() ?: ""
-                val description = item.selectFirst(".info .summary")?.text() ?: ""
+                val description = item.selectFirst(".info .summary")?.wholeText()?.trim() ?: ""
                 val lastUpdated =
                     item.selectFirst(".right .time")?.text()?.removePrefix("最后更新：")?.let {
                         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
                         LocalDateTime.parse(it, formatter)
-                    } ?: LocalDateTime.MIN
+                    } ?: LocalDateTime.now()
                 val isComplete = item.selectFirst(".right .status")?.text() == "已完结"
 
                 emit(
@@ -83,6 +84,14 @@ object FqbookSearchProvider : SearchProvider {
                 )
             }
             currentPage++
+
+
+            val pageCount = soup.selectFirst("div.results div.hd h4 span")?.text()?.let {
+                Regex("共计(\\d+)页").find(it)?.groupValues[1]?.toIntOrNull()
+            } ?: Int.MAX_VALUE
+
+            if (currentPage + 1 > pageCount) break
+
             delay(2.seconds)
         }
         emit(SearchResult.End())

@@ -24,7 +24,7 @@ suspend fun loadSimpleBookList(
         val titleDoc = item?.selectFirst(".two a")
         val title = titleDoc?.text()?.removeSuffix("全文阅读") ?: ""
         val id = titleDoc?.attr("href")?.removePrefix("/novel/")?.removeSuffix(".html") ?: ""
-        val author = item.selectFirst(".four")?.text() ?: "未知"
+        val author = item.selectFirst(".four")?.text() ?: ""
         val wordCount =
             item.selectFirst(".five")?.text()?.replace(",", "")?.removeSuffix("万")?.toFloatOrNull()
                 ?.times(10000)?.toInt() ?: 0
