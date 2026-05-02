@@ -66,7 +66,7 @@ dependencies {
     compileOnly(libs.androidx.foundation.layout)
     compileOnly(platform(libs.compose.bom))
     compileOnly(libs.compose.material3)
-    compileOnly(libs.lightnovelreader.api)
+    implementation(libs.lightnovelreader.api)
 
     // 插件依赖
     implementation(libs.jsoup)

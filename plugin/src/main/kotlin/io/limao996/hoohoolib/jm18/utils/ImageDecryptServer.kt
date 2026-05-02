@@ -27,10 +27,6 @@ class ImageDecryptServer(port: Int) {
     private val server = embeddedServer(CIO, port = port) {
 
         routing {
-            get("/ping") {
-                call.respondText("OK", ContentType.Text.Plain)
-            }
-
             get("/image-decrypt") {
                 val imageUrl = call.request.queryParameters["imageUrl"]
                 if (imageUrl == null) {

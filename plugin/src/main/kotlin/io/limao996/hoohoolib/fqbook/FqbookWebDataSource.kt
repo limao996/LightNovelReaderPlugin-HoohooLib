@@ -43,7 +43,8 @@ class FqbookWebDataSource(
     val bookRepositoryApi: BookRepositoryApi,
     val bookshelfRepositoryApi: BookshelfRepositoryApi,
 ) : WebBookDataSource {
-    override val id = "io.limao996.hoohoolib:fqbook".hashCode()
+    val tag = "io.limao996.hoohoolib:fqbook"
+    override val id = tag.hashCode()
 
     private var coroutineScope = CoroutineScope(Dispatchers.IO)
 
@@ -85,12 +86,14 @@ class FqbookWebDataSource(
     override val searchProvider = FqbookSearchProvider
     override val explorePageProvider = FqbookExplorePageProvider
 
-    override suspend fun getBookInformation(id: String) = ifCache(id) { FqbookBookInformation(id) }
+    override suspend fun getBookInformation(id: String) =
+        ifCache("$tag:info:$id") { FqbookBookInformation(id) }
 
-    override suspend fun getBookVolumes(id: String) = ifCache(id) { FqbookBookVolumes(id) }
+    override suspend fun getBookVolumes(id: String) =
+        ifCache("$tag:volumes:$id") { FqbookBookVolumes(id) }
 
     override suspend fun getChapterContent(chapterId: String, bookId: String) =
-        ifCache(chapterId + bookId) {
+        ifCache("$tag:content:$bookId:$chapterId") {
             FqbookChapterContent(
                 chapterId, bookId, localBookDataSourceApi
             )

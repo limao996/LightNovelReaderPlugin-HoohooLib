@@ -45,7 +45,8 @@ class AliceswWebDataSource(
     val bookshelfRepositoryApi: BookshelfRepositoryApi,
 ) : WebBookDataSource {
     // 数据源唯一id
-    override val id = "io.limao996.hoohoolib:alicesw".hashCode()
+    val tag = "io.limao996.hoohoolib:alicesw"
+    override val id = tag.hashCode()
 
     // 协程作用域
     private var coroutineScope = CoroutineScope(Dispatchers.IO)
@@ -95,12 +96,12 @@ class AliceswWebDataSource(
 
     override val searchProvider = AliceswSearchProvider
 
-    override suspend fun getBookInformation(id: String) = ifCache(id) { AliceswBookInformation(id) }
+    override suspend fun getBookInformation(id: String) = ifCache("$tag:info:$id") { AliceswBookInformation(id) }
 
-    override suspend fun getBookVolumes(id: String) = ifCache(id) { AliceswBookVolumes(id) }
+    override suspend fun getBookVolumes(id: String) = ifCache("$tag:volumes:$id") { AliceswBookVolumes(id) }
 
     override suspend fun getChapterContent(chapterId: String, bookId: String) =
-        ifCache(chapterId + bookId) {
+        ifCache("$tag:content:$bookId:$chapterId") {
             AliceswChapterContent(context, chapterId, bookId, localBookDataSourceApi)
         }
 

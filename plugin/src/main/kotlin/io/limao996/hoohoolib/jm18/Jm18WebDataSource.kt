@@ -6,9 +6,11 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
+import io.limao996.hoohoolib.jm18.explore.Jm18ExplorePageProvider
 import io.limao996.hoohoolib.jm18.utils.ImageDecryptServer
 import io.limao996.hoohoolib.utils.UserAgentGenerator
 import io.limao996.hoohoolib.utils.httpClient
+import io.limao996.hoohoolib.utils.infoLog
 import io.nightfish.lightnovelreader.api.book.BookInformation
 import io.nightfish.lightnovelreader.api.book.BookRepositoryApi
 import io.nightfish.lightnovelreader.api.book.BookVolumes
@@ -38,7 +40,7 @@ import kotlinx.coroutines.withContext
 import kotlin.random.Random
 
 const val JM18_HOST = "https://18mh.net"
-var JM18_HTTP_PORT = Random.nextInt(10000, 65535)
+const val JM18_HTTP_PORT = 37089
 
 
 @Suppress("unused")
@@ -55,7 +57,8 @@ class Jm18WebDataSource(
     val bookRepositoryApi: BookRepositoryApi,
     val bookshelfRepositoryApi: BookshelfRepositoryApi,
 ) : WebBookDataSource {
-    override val id = "io.limao996.hoohoolib:jm18".hashCode()
+    val tag = "io.limao996.hoohoolib:jm18"
+    override val id = tag.hashCode()
 
     private var coroutineScope = CoroutineScope(Dispatchers.IO)
 
@@ -70,7 +73,7 @@ class Jm18WebDataSource(
     }
 
     override val cache = Cache(
-        timeout = 0//2 * 60 * 60 * 1000
+        timeout = 2 * 60 * 60 * 1000
     )
 
     private inline fun <reified T : CanBeEmpty> ifCache(id: String, block: () -> T): T {
@@ -96,16 +99,7 @@ class Jm18WebDataSource(
         }
 
         coroutineScope.launch {
-            while (true) {
-                val server = ImageDecryptServer(JM18_HTTP_PORT)
-                server.start()
-
-                if (httpClient.get("http://127.0.0.1:$JM18_HTTP_PORT/ping")
-                        .bodyAsText() == "OK"
-                ) break
-                JM18_HTTP_PORT = Random.nextInt(10000, 65535)
-                server.stop()
-            }
+            ImageDecryptServer(JM18_HTTP_PORT).start()
         }
     }
 
@@ -119,23 +113,19 @@ class Jm18WebDataSource(
     }
 
     override val searchProvider = Jm18SearchProvider
-    override val explorePageProvider = object : ExplorePageProvider.DefaultExplorePageProvider {
-        override val explorePageIdList: List<String> = emptyList()
-        override val exploreTapPageDataSourceMap: Map<String, ExploreTapPageDataSource> = emptyMap()
-        override val exploreExpandedPageDataSourceMap: Map<String, ExploreExpandedPageDataSource> =
-            emptyMap()
-    }//Jm18ExplorePageProvider
+    override val explorePageProvider = Jm18ExplorePageProvider
 
-    override suspend fun getBookInformation(id: String): BookInformation = ifCache(id) {
-        Jm18BookInformation(id)
-    }
+    override suspend fun getBookInformation(id: String): BookInformation =
+        ifCache("$tag:info:$id") {
+            Jm18BookInformation(id)
+        }
 
-    override suspend fun getBookVolumes(id: String): BookVolumes = ifCache(id) {
+    override suspend fun getBookVolumes(id: String): BookVolumes = ifCache("$tag:volumes:$id") {
         Jm18BookVolumes(id)
     }
 
     override suspend fun getChapterContent(chapterId: String, bookId: String): ChapterContent =
-        ifCache(chapterId + bookId) {
-            ChapterContent.empty()
+        ifCache("$tag:content:$bookId:$chapterId") {
+            Jm18ChapterContent(chapterId, bookId, localBookDataSourceApi)
         }
 }

@@ -92,9 +92,9 @@ object FqbookExploreLoader {
     }
 
     suspend fun get(
-        pageNum: Int = 1, pageSize: Int = 30, parameters: Parameters = Parameters()
+        pageNum: Int = 1, pageSize: Int = 30, params: Parameters = Parameters()
     ): List<BookInformation> {
-        val url = parameters.run {
+        val url = params.run {
             buildCategoryUrl(
                 pageNum, pageSize, catId, size, isFinish, updT, orderBy
             )

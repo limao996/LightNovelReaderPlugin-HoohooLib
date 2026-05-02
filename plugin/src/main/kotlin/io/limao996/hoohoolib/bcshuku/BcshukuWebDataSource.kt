@@ -43,7 +43,8 @@ class BcshukuWebDataSource(
     val bookRepositoryApi: BookRepositoryApi,
     val bookshelfRepositoryApi: BookshelfRepositoryApi,
 ) : WebBookDataSource {
-    override val id = "io.limao996.hoohoolib:bcshuku".hashCode()
+    val tag = "io.limao996.hoohoolib:bcshuku"
+    override val id = tag.hashCode()
 
     private var coroutineScope = CoroutineScope(Dispatchers.IO)
 
@@ -86,12 +87,12 @@ class BcshukuWebDataSource(
     override val searchProvider = BcshukuSearchProvider
     override val explorePageProvider = BcshukuExplorePageProvider
 
-    override suspend fun getBookInformation(id: String) = ifCache(id) { BcshukuBookInformation(id) }
+    override suspend fun getBookInformation(id: String) = ifCache("$tag:info:$id") { BcshukuBookInformation(id) }
 
-    override suspend fun getBookVolumes(id: String) = ifCache(id) { BcshukuBookVolumes(id) }
+    override suspend fun getBookVolumes(id: String) = ifCache("$tag:volumes:$id") { BcshukuBookVolumes(id) }
 
     override suspend fun getChapterContent(chapterId: String, bookId: String) =
-        ifCache(chapterId + bookId) {
+        ifCache("$tag:content:$bookId:$chapterId") {
             BcshukuChapterContent(chapterId, bookId, localBookDataSourceApi)
         }
 }

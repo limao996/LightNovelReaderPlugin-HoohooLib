@@ -27,7 +27,6 @@ suspend fun BcshukuChapterContent(
 ): ChapterContent {
     val ua = UserAgentGenerator().generateAndroidUA()
 
-    // Step 1: Fetch chapter page to extract the JSON config
     val pageResponse = withContext(Dispatchers.IO) {
         httpClient.get(chapterId) {
             header(
@@ -37,7 +36,6 @@ suspend fun BcshukuChapterContent(
     }
     val pageHtml = pageResponse.bodyAsText()
 
-    // Extract JSON config: {"url":"...","mobile":"...","isk":"...","novel":"...","chapter":"..."}
     val jsonMatch = Regex("""\{"url"[^}]*"chapter"[^}]*\}""").find(pageHtml)
     val configJson = jsonMatch?.value ?: return ChapterContent.empty(chapterId)
     val config = JSONObject(configJson)

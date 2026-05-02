@@ -15,7 +15,7 @@ import kotlinx.coroutines.isActive
 import kotlin.time.Duration.Companion.seconds
 
 class FqbookCustomExploreExpandedPageDataSource(
-    override val title: String, val parameters: Parameters
+    override val title: String, val params: Parameters
 ) : ExploreExpandedPageDataSource {
     override val filters: List<SingleChoiceFilter> = Parameters.run {
         listOf(
@@ -24,31 +24,31 @@ class FqbookCustomExploreExpandedPageDataSource(
                 dialogTitle = LocalString("选择分类"),
                 description = LocalString("选择作品分类"),
                 choices = category.keys.toList(),
-                defaultChoice = category.entries.first { it.value == parameters.catId }.key
+                defaultChoice = category.entries.first { it.value == params.catId }.key
             ), SingleChoiceFilter(
                 title = LocalString("作品字数"),
                 dialogTitle = LocalString("选择字数范围"),
                 description = LocalString("筛选作品字数"),
                 choices = wordCount.keys.toList(),
-                defaultChoice = wordCount.entries.first { it.value == parameters.size }.key
+                defaultChoice = wordCount.entries.first { it.value == params.size }.key
             ), SingleChoiceFilter(
                 title = LocalString("是否完结"),
                 dialogTitle = LocalString("选择完结状态"),
                 description = LocalString("筛选是否完结"),
                 choices = finishStatus.keys.toList(),
-                defaultChoice = finishStatus.entries.first { it.value == parameters.isFinish }.key
+                defaultChoice = finishStatus.entries.first { it.value == params.isFinish }.key
             ), SingleChoiceFilter(
                 title = LocalString("更新时间"),
                 dialogTitle = LocalString("选择更新时间"),
                 description = LocalString("筛选最近更新"),
                 choices = updateTime.keys.toList(),
-                defaultChoice = updateTime.entries.first { it.value == parameters.updT }.key
+                defaultChoice = updateTime.entries.first { it.value == params.updT }.key
             ), SingleChoiceFilter(
                 title = LocalString("排序方式"),
                 dialogTitle = LocalString("选择排序方式"),
                 description = LocalString("作品排序方式"),
                 choices = orderBy.keys.toList(),
-                defaultChoice = orderBy.entries.first { it.value == parameters.orderBy }.key
+                defaultChoice = orderBy.entries.first { it.value == params.orderBy }.key
             )
         )
     }
@@ -61,7 +61,7 @@ class FqbookCustomExploreExpandedPageDataSource(
     override fun getResultFlow(): Flow<SearchResult> = flow {
         targetPage = 1
         var currentPage = 1
-        val newParameters = Parameters.run {
+        val newParams = Parameters.run {
             Parameters(
                 catId = category[filters[0].value]!!,
                 size = wordCount[filters[1].value]!!,
@@ -76,7 +76,7 @@ class FqbookCustomExploreExpandedPageDataSource(
                 continue
             }
             val bookList =
-                FqbookExploreLoader.get(pageSize = 30, pageNum = currentPage, parameters = newParameters)
+                FqbookExploreLoader.get(pageSize = 30, pageNum = currentPage, params = newParams)
             if (bookList.isEmpty()) break
             bookList.forEach {
                 emit(SearchResult.MultipleBook(it))
