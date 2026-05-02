@@ -32,7 +32,7 @@ const val ALICESW_HOST = "https://www.alicesw.com"
 
 @Suppress("unused")
 @WebDataSource(
-    name = "爱丽丝书屋🔞", provider = "HoohooLib from alicesw.com"
+    name = "爱丽丝书屋🔞🛩", provider = "HoohooLib from alicesw.com"
 )
 class AliceswWebDataSource(
     val context: Context,
@@ -55,11 +55,15 @@ class AliceswWebDataSource(
     override var offLine: Boolean = false
     override val isOffLineFlow = MutableStateFlow(false)
     override suspend fun isOffLine(): Boolean = withContext(Dispatchers.IO) {
-        httpClient.get(ALICESW_HOST) {
-            header(
-                "user-agent", UserAgentGenerator().generateAndroidUA()
-            )
-        }.status != HttpStatusCode.OK
+        try {
+            httpClient.get(ALICESW_HOST) {
+                header(
+                    "user-agent", UserAgentGenerator().generateAndroidUA()
+                )
+            }.status != HttpStatusCode.OK
+        } catch (_: Exception) {
+            true
+        }
     }
 
     // 初始化缓存机制

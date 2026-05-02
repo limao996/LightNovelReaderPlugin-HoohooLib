@@ -27,12 +27,16 @@ suspend fun BcshukuChapterContent(
 ): ChapterContent {
     val ua = UserAgentGenerator().generateAndroidUA()
 
-    val pageResponse = withContext(Dispatchers.IO) {
-        httpClient.get(chapterId) {
-            header(
-                "user-agent", ua
-            )
+    val pageResponse = try {
+        withContext(Dispatchers.IO) {
+            httpClient.get(chapterId) {
+                header(
+                    "user-agent", ua
+                )
+            }
         }
+    } catch (_: Exception) {
+        return ChapterContent.empty(chapterId)
     }
     val pageHtml = pageResponse.bodyAsText()
 
@@ -45,21 +49,25 @@ suspend fun BcshukuChapterContent(
     val novel = config.optString("novel", "")
     val chapter = config.optString("chapter", "")
 
-    val contentJson = withContext(Dispatchers.IO) {
-        httpClient.post("$BCSHUKU_HOST/conapi.php") {
-            header("user-agent", ua)
-            header("origin", BCSHUKU_HOST)
-            header("x-requested-with", "XMLHttpRequest")
-            header("referer", chapterId)
+    val contentJson = try {
+        withContext(Dispatchers.IO) {
+            httpClient.post("$BCSHUKU_HOST/conapi.php") {
+                header("user-agent", ua)
+                header("origin", BCSHUKU_HOST)
+                header("x-requested-with", "XMLHttpRequest")
+                header("referer", chapterId)
 
-            setBody(FormDataContent(parameters {
-                append("url", url)
-                append("mobile", mobile)
-                append("isk", isk)
-                append("novel", novel)
-                append("chapter", chapter)
-            }))
-        }.bodyAsText()
+                setBody(FormDataContent(parameters {
+                    append("url", url)
+                    append("mobile", mobile)
+                    append("isk", isk)
+                    append("novel", novel)
+                    append("chapter", chapter)
+                }))
+            }.bodyAsText()
+        }
+    } catch (_: Exception) {
+        return ChapterContent.empty(chapterId)
     }
 
     val result = JSONObject(contentJson)

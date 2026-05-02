@@ -31,7 +31,7 @@ const val FQBOOK_HOST = "https://fqbook.cc"
 
 @Suppress("unused")
 @WebDataSource(
-    name = "疯情书库🔞", provider = "HoohooLib from fqbook.cc"
+    name = "疯情书库🔞🛩", provider = "HoohooLib from fqbook.cc"
 )
 class FqbookWebDataSource(
     val context: Context,
@@ -51,11 +51,15 @@ class FqbookWebDataSource(
     override var offLine: Boolean = false
     override val isOffLineFlow = MutableStateFlow(false)
     override suspend fun isOffLine(): Boolean = withContext(Dispatchers.IO) {
-        httpClient.get(FQBOOK_HOST) {
-            header(
-                "user-agent", UserAgentGenerator().generateWindowsUA()
-            )
-        }.status != HttpStatusCode.OK
+        try {
+            httpClient.get(FQBOOK_HOST) {
+                header(
+                    "user-agent", UserAgentGenerator().generateWindowsUA()
+                )
+            }.status != HttpStatusCode.OK
+        } catch (_: Exception) {
+            true
+        }
     }
 
     override val cache = Cache(

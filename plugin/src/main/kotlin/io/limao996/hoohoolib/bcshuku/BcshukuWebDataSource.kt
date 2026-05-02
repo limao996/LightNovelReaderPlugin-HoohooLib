@@ -51,11 +51,15 @@ class BcshukuWebDataSource(
     override var offLine: Boolean = false
     override val isOffLineFlow = MutableStateFlow(false)
     override suspend fun isOffLine(): Boolean = withContext(Dispatchers.IO) {
-        httpClient.get(BCSHUKU_HOST) {
-            header(
-                "user-agent", UserAgentGenerator().generateAndroidUA()
-            )
-        }.status != HttpStatusCode.OK
+        try {
+            httpClient.get(BCSHUKU_HOST) {
+                header(
+                    "user-agent", UserAgentGenerator().generateAndroidUA()
+                )
+            }.status != HttpStatusCode.OK
+        } catch (_: Exception) {
+            true
+        }
     }
 
     override val cache = Cache(
@@ -84,7 +88,7 @@ class BcshukuWebDataSource(
         }
     }
 
-    override val searchProvider = BcshukuSearchProvider
+    override val searchProvider = BcshukuSearchProvider(context)
     override val explorePageProvider = BcshukuExplorePageProvider
 
     override suspend fun getBookInformation(id: String) = ifCache("$tag:info:$id") { BcshukuBookInformation(id) }

@@ -1,5 +1,6 @@
 package io.limao996.hoohoolib.bcshuku
 
+import android.content.Context
 import android.net.Uri
 import androidx.core.net.toUri
 import io.ktor.client.request.get
@@ -7,8 +8,9 @@ import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
-import io.limao996.hoohoolib.alicesw.ALICESW_HOST
 import io.limao996.hoohoolib.utils.UserAgentGenerator
+import io.limao996.hoohoolib.utils.browserGet
+import io.limao996.hoohoolib.utils.errorLog
 import io.limao996.hoohoolib.utils.httpClient
 import io.nightfish.lightnovelreader.api.book.MutableBookInformation
 import io.nightfish.lightnovelreader.api.book.WordCount
@@ -30,7 +32,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.time.Duration.Companion.seconds
 
-object BcshukuSearchProvider : SearchProvider {
+class BcshukuSearchProvider(val context: Context) : SearchProvider {
     override val searchTypes: List<SearchType> = listOf(
         SearchType("_all", "综合搜索".local(), "请输入关键词".local()),
     )
@@ -41,50 +43,43 @@ object BcshukuSearchProvider : SearchProvider {
         val q = URLEncoder.encode(keyword, "utf-8")
         val ua = UserAgentGenerator().generateAndroidUA()
 
-        val initResponse = withContext(Dispatchers.IO) {
-            httpClient.get("$BCSHUKU_HOST/e/search/index.php?show=title,writer,byr&searchget=1") {
-                parameter("keyboard", q)
-                parameter("show", "title,writer,byr")
-                parameter("searchget", 1)
-                header(
-                    "user-agent", ua
-                )
-                header("referer", BCSHUKU_HOST)
-            }
-        }
-
-        val location = initResponse.headers["location"] ?: initResponse.bodyAsText()
-        val match = Regex("searchid=(\\d+)").find(location)
+        val initResponse = browserGet(
+            context,
+            "$BCSHUKU_HOST/e/search/index.php?show=title,writer,byr&searchget=1&keyboard=$q"
+        )
+        val html = initResponse?.html() ?: ""
+        val match = Regex("searchid=(\\d+)").find(html)
         val searchid = match?.groupValues?.get(1)
 
         if (searchid == null) {
             emit(SearchResult.Error("获取搜索ID失败！"))
             return@flow
         }
-
-        searchAndParse(searchid, ua)
+        searchAndParse(searchid, html, ua)
     }.flowOn(Dispatchers.IO)
 
     private suspend fun kotlinx.coroutines.flow.FlowCollector<SearchResult>.searchAndParse(
-        searchid: String, ua: String
+        searchid: String, html: String, ua: String
     ) {
         var currentPage = 0
         while (currentCoroutineContext().isActive) {
-            val response = withContext(Dispatchers.IO) {
-                httpClient.get("$BCSHUKU_HOST/e/search/result/index.php") {
-                    parameter("page", currentPage)
-                    parameter("searchid", searchid)
-                    header("user-agent", ua)
-                    header("referer", BCSHUKU_HOST)
+            val soup = if (currentPage == 0) Jsoup.parse(html) else {
+                val response = try {
+                    withContext(Dispatchers.IO) {
+                        httpClient.get("$BCSHUKU_HOST/e/search/result/index.php") {
+                            parameter("page", currentPage)
+                            parameter("searchid", searchid)
+                            header("user-agent", ua)
+                            header("referer", BCSHUKU_HOST)
+                        }
+                    }
+                } catch (e: Exception) {
+                    errorLog(e)
+                    break
                 }
+                if (response.status != HttpStatusCode.OK) break
+                Jsoup.parse(response.bodyAsText())
             }
-
-            if (response.status != HttpStatusCode.OK) {
-                if (currentPage == 0) emit(SearchResult.Error("网页请求失败！"))
-                break
-            }
-
-            val soup = Jsoup.parse(response.bodyAsText())
             val items = soup.select(".one-row .col-md-3.col-sm-6.col-xs-6.home-truyendecu")
 
             if (items.isEmpty() && currentPage == 0) {

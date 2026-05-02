@@ -5,6 +5,7 @@ import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import io.ktor.client.HttpClient
+import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.statement.HttpResponse
@@ -20,12 +21,12 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import kotlin.coroutines.resume
 
-val httpClient = HttpClient()
+val httpClient = HttpClient(OkHttp)
 
 // 常量提取
 private const val MAX_RETRY_TIMES = 3
 private const val INITIAL_RETRY_DELAY_MS = 2500L
-private const val BROWSER_TIMEOUT_MS = 5000L
+private const val BROWSER_TIMEOUT_MS = 30000L
 private const val MAX_CONCURRENT_REQUESTS = 3
 private const val WEBVIEW_IDLE_TIMEOUT_MS = 5000L
 
@@ -51,7 +52,11 @@ private val userAgentGenerator by lazy { UserAgentGenerator() }
 suspend fun httpGet(url: String, useWindowsUA: Boolean = false): Document? =
     requestLimiter.withPermit {
         executeWithRetry {
-            executeHttpGet(url, useWindowsUA)
+            try {
+                executeHttpGet(url, useWindowsUA)
+            } catch (_: Exception) {
+                return@executeWithRetry null
+            }
         }?.bodyAsText()?.let(Jsoup::parse)
     }
 

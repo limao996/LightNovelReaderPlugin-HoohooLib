@@ -45,7 +45,7 @@ const val JM18_HTTP_PORT = 37089
 
 @Suppress("unused")
 @WebDataSource(
-    name = "禁漫天堂🔞", provider = "HoohooLib from 18mh.net"
+    name = "禁漫天堂🔞🛩", provider = "HoohooLib from 18mh.net"
 )
 class Jm18WebDataSource(
     val context: Context,
@@ -65,11 +65,15 @@ class Jm18WebDataSource(
     override var offLine: Boolean = false
     override val isOffLineFlow = MutableStateFlow(false)
     override suspend fun isOffLine(): Boolean = withContext(Dispatchers.IO) {
-        httpClient.get(JM18_HOST) {
-            header(
-                "user-agent", UserAgentGenerator().generateWindowsUA()
-            )
-        }.status != HttpStatusCode.OK
+        try {
+            httpClient.get(JM18_HOST) {
+                header(
+                    "user-agent", UserAgentGenerator().generateWindowsUA()
+                )
+            }.status != HttpStatusCode.OK
+        } catch (_: Exception) {
+            true
+        }
     }
 
     override val cache = Cache(
